@@ -1,0 +1,112 @@
+{% extends "chatapp/base.html" %}
+{% load static %}
+
+{% block title %}
+    {{chatroom.name}} | LiveChat
+{% endblock title %}
+
+
+
+{% block content %}
+
+    <div class="container my-5">
+
+        <div class="row">
+            
+            <h2 class="text-center bg-dark text-light py-4">Chat Room - {{chatroom.name}}
+                <br> <span class="text-success">{{ user.username }} </span>
+            </h2>
+
+            
+            <div class="my-4" id="chat-messages">
+                {% for message in chat_messages %}
+                <div class="shadow p-2 pt-4 mb-3 bg-body rounded px-4 bg-dark">
+                    <p class="text-success fw-bold p-0 m-0">@{{ message.user.username }}</p> 
+                    <p class="text-dark fw-normal p-0 m-0 fs-5 py-2">{{ message.message }}</p> 
+                    <p class="text-gray fw-light p-0 m-0 fst-italic">{{ message.date }}</p> 
+                </div>
+                {% endfor %}
+            </div>
+        
+
+            <form method='post'>
+                {% csrf_token %}
+
+                <div class="input-group mb-3 mt-4">
+                <input id="message-input" type="text" class="form-control" placeholder="Message" aria-label="Message">
+                <button class="btn btn-outline-primary" id="send-button">Button</button>
+                </div>
+
+            </form>
+            
+            <div>
+                <p>{{ chatroom.slug|json_script:"json-chatroomname" }} </p>
+                <p>{{ request.user.username|json_script:"json-username" }} </p>
+                
+            </div>
+
+        </div>  
+                    
+    </div>
+
+{% endblock content %}
+
+
+{% block scripts %}
+
+    <script>
+
+        const chatRoomName = JSON.parse(document.getElementById('json-chatroomname').textContent);
+        const userName = JSON.parse(document.getElementById('json-username').textContent);
+        console.log(chatRoomName, userName);
+
+        const chatSocket = new WebSocket(
+            'ws://'
+            +window.location.host
+            +'/ws/'
+            +chatRoomName
+            +'/'
+        )
+        console.log("ChatSockect here is : ",chatSocket);
+
+        
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.message){
+                console.log('Received message to cleint is : ',data.message, data.username, data.room)
+
+                let html = data.username + ' : ' + data.message + '</br>'
+                document.getElementById('chat-messages').innerHTML += html
+
+            }else{
+                alert('This message was empty')
+            }
+            // console.log("This is a message.");
+        }
+
+        chatSocket.onclose = function(e) {
+            console.log('Chat socket closed.');
+        }
+
+
+        document.getElementById('send-button').onclick = function(e) {
+            e.preventDefault()
+
+            const messageInput = document.getElementById('message-input')
+            const message = messageInput.value;
+            messageInput.value = '';
+            chatSocket.send(JSON.stringify({
+                'message': message,
+                'username': userName,
+                'room': chatRoomName,
+                
+            }));
+            messageInput.value = '';
+            // console.log("Message is : ",message, "Username is : ",userName, "Room is : ",chatRoomName)
+
+        };
+
+    </script>
+
+{% endblock scripts %}

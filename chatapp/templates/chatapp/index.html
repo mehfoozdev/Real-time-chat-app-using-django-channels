@@ -1,0 +1,32 @@
+{% extends "chatapp/base.html" %}
+{% load static %}
+
+{% block title %}
+    Chatrooms
+{% endblock title %}
+
+
+{% block content %}
+
+  <div class="container my-5">
+
+    <div class="row">
+        
+        <h2 class="text-center bg-dark text-light py-4">List of Chat Rooms</h2>
+
+        {% for chatroom in chatrooms %}
+          <a href="{% url 'room' chatroom.slug %}" class="">{{ chatroom.name }}</a>
+        {% endfor %}
+
+    </div>  
+                  
+  </div>
+
+{% endblock content %}
+
+
+{% block scripts %}
+ 
+{% endblock scripts %}
+
+
